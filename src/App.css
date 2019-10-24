@@ -1,0 +1,33 @@
+.App-header {
+/*  background-color: #282c34;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-size: calc(10px + 2vmin);
+  color: white;*/
+}
+
+.App-link {
+  color: #09d3ac;
+}
+.listBox {
+  border: black solid 1px;
+  width: 300px;
+  min-height: 100px;
+}
+
+.Col1{
+  border: red solid 1px;
+  color: blue;
+}
+.Row1{
+  border: blue solid 1px;
+
+}
+
+Col{
+  border: red solid 1px;
+  color: blue;
+}

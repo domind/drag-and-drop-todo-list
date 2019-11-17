@@ -4,7 +4,7 @@ export const initData = [
     title: "TO DO",
     tasks: [
       { id: "task1", content: "something to do 1" },
-      { id: "task2", content: "something to do 2" },
+      { id: "task2", content: " to do 2" },
       { id: "task3", content: "something to do 3" },
       { id: "task4", content: "something to do 4" },
       { id: "task5", content: "something to do 5" },

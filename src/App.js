@@ -5,6 +5,7 @@ import Row from "react-bootstrap/Row";
 import Container from "react-bootstrap/Container";
 import Col from "react-bootstrap/Col";
 import Column from "./column";
+import AddColumn from "./addColumn";
 
 // a little function to help us with reordering the result
 const reorder = (list, startIndex, endIndex) => {
@@ -14,13 +15,20 @@ const reorder = (list, startIndex, endIndex) => {
   return result;
 };
 
-const getListStyle = () => ({
+const findIndex = (list, item) => {
+  return list
+    .map(e => {
+      return e.id;
+    })
+    .indexOf(item);
+};
+
+const getListStyle = {
   display: "flex",
   padding: 5,
   margin: 20,
   color: "black"
-  //  overflow: "auto"
-});
+};
 
 class App extends Component {
   constructor(props) {
@@ -29,9 +37,12 @@ class App extends Component {
       column: initData,
       width: window.innerWidth,
       height: window.innerHeight,
-      colMinHeight: 6
+      colMinHeight: 6,
+      colNumber: 4,
+      action: { actionName: "", actionItem: "" }
     };
     this.updateWindowDimensions = this.updateWindowDimensions.bind(this);
+    this.elementEdit = this.elementEdit.bind(this);
   }
   componentDidMount() {
     this.updateWindowDimensions();
@@ -45,6 +56,99 @@ class App extends Component {
     this.setState({ width: window.innerWidth, height: window.innerHeight });
   }
 
+  /*------------------------------------------------------------*/
+  elementEdit(id, actionToDo, text, columnId) {
+    let data = this.state.column;
+    let columnNo = findIndex(data, columnId);
+        switch (actionToDo) {
+      case "ColAdd":
+        let maxColId = Math.max.apply(
+          null,
+          data.map(column => {
+            return parseInt(column.id.slice(3));
+          })
+        );
+        data.push({ id: "col" + (maxColId + 1), title: "", tasks: [] });
+
+        this.setState(
+          {
+            action: {
+              actionName: "ColEdit",
+              actionItem: "col" + (maxColId + 1)
+            }
+          },
+         
+        );
+        break;
+      case "ColEdit":
+        data[columnNo].title = text;
+        this.setState({
+          column: data,
+          editingCol: true,
+          editingColId: columnId,
+          action: { actionName: "ColEdit", actionItem: columnId }
+        });
+        break;
+      case "ColDelete":
+        data.splice(findIndex(data, columnId), 1);
+        break;
+      case "TaskDelete":
+        const columns = this.state.column;
+        const myColumn = columns[findIndex(columns, columnId)];
+
+        myColumn.tasks.splice(findIndex(myColumn.tasks, id), 1);
+        //action = false;
+        break;
+      case "TaskEdit":
+        
+        let taskNo = findIndex(data[columnNo].tasks, id);
+        data[columnNo].tasks[taskNo].content = text;
+        this.setState({ column: data });
+        this.setState({
+          action: { actionName: actionToDo, actionItem: id }
+        });
+        break;
+      case "TaskAdd":
+        let maxTaskId = Math.max.apply(
+          null,
+          data.map(columns => {
+            return Math.max.apply(
+              null,
+              columns.tasks.map(task => {
+                return parseInt(task.id.slice(4));
+              })
+            );
+          })
+        );
+        data[columnNo].tasks.push({
+          id: "task" + (maxTaskId + 1),
+          content: ""
+        });
+        this.setState(
+          {
+            column: data,
+            // editing: true,
+            //  editElement: "task" + (maxTaskId + 1),
+            action: {
+              actionName: "TaskEdit",
+              actionItem: "task" + (maxTaskId + 1)
+            }
+          },
+ 
+        );
+        break;
+      default:
+        this.setState({ action: { actionName: "", actionItem: "" } });
+        break;
+    }
+    /*  this.setState({
+      editing: action,
+      editElement: id,
+      action: { actionName: action, actionItem: id }
+    });*/
+    this.setState({ column: data });
+  }
+  /*------------------------------------------------------------*/
   onDragEnd = result => {
     const { source, destination } = result;
     // dropped outside the list
@@ -101,17 +205,27 @@ class App extends Component {
       }
     }
   };
-
+  /*------------------------------------------------------------*/
   render() {
     const someStyle = {
-      background: "SteelBlue",
       minHeight: this.state.height,
+      minWidth: this.state.colNumber * 358 + 300, // calculating screen width
+      background: "SteelBlue",
       color: "white"
     };
 
     return (
-      <div style={someStyle}>
-        <Container>
+      <div
+        style={someStyle}
+        onClick={() =>
+          this.setState({
+            editCol: false,
+            editingColId: "",
+            action: { actionName: "", actionItem: "" }
+          })
+        }
+      >
+        <Container style={{ margin: 0 }}>
           <Row>
             <Col style={{ textAlign: "center" }}>
               <h1>Testing react-beautiful-dnd</h1>
@@ -127,19 +241,19 @@ class App extends Component {
               >
                 {(provided, snapshot) => (
                   <div>
-                    <div
-                      ref={provided.innerRef}
-                      style={getListStyle(snapshot.isDraggingOver)}
-                    >
+                    <div ref={provided.innerRef} style={getListStyle}>
                       {this.state.column.map((column, index) => (
                         <Column
                           key={index}
                           column={column}
                           index={index}
                           colMinHeight={this.state.colMinHeight}
+                          elementEdit={this.elementEdit}
+                          action={this.state.action}
                         />
                       ))}
                       {provided.placeholder}
+                      <AddColumn elementEdit={this.elementEdit} />
                     </div>
                   </div>
                 )}

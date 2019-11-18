@@ -33,6 +33,7 @@ export default class Column extends React.Component {
   };
   /*------------------------------------------------------------*/
   render() {
+  
     const getItemStyle = (isDragging, draggableStyle) => ({
       // some basic styles to make the items look a bit nicer
       border: "solid DarkSlateBlue   ",
@@ -45,7 +46,7 @@ export default class Column extends React.Component {
         ? " rgba(100, 149, 237,0.5)"
         : "  rgba(100, 149, 237,1)  ",
       borderRadius: 5,
-
+      
       height: 65 * (this.props.column.tasks.length + 1) + 80,
       // styles we need to apply on draggables
       ...draggableStyle

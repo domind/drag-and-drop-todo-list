@@ -1,11 +1,12 @@
 import React, { Component } from "react";
 import { DragDropContext, Droppable } from "react-beautiful-dnd";
-import { initData } from "./initData";
+//import { initData } from "./initData";
 import Row from "react-bootstrap/Row";
 import Container from "react-bootstrap/Container";
 import Col from "react-bootstrap/Col";
 import Column from "./column";
 import AddColumn from "./addColumn";
+import Firebase from 'firebase';
 
 // a little function to help us with reordering the result
 const reorder = (list, startIndex, endIndex) => {
@@ -29,12 +30,22 @@ const getListStyle = {
   margin: 20,
   color: "black"
 };
+const config ={
+  apiKey: "AIzaSyCmrU0AuRpNGPRsD2-JjQ5os7gPjKGxHMo",
+  authDomain: "tribal-drake-257712.firebaseapp.com",
+  databaseURL: "https://tribal-drake-257712.firebaseio.com",
+  projectId: "tribal-drake-257712",
+  storageBucket: "tribal-drake-257712.appspot.com",
+  messagingSenderId: "577742396333",
+  appId: "1:577742396333:web:8a52c828c3edb5de21df24"
 
+}
 class App extends Component {
   constructor(props) {
     super(props);
+    Firebase.initializeApp(config);
     this.state = {
-      column: initData,
+      column: [],
       width: window.innerWidth,
       height: window.innerHeight,
       colMinHeight: 6,
@@ -47,6 +58,7 @@ class App extends Component {
   componentDidMount() {
     this.updateWindowDimensions();
     window.addEventListener("resize", this.updateWindowDimensions);
+    this.getUserData();
   }
 
   componentWillUnmount() {
@@ -56,13 +68,36 @@ class App extends Component {
     this.setState({ width: window.innerWidth, height: window.innerHeight });
   }
 
+  writeUserData = () => {
+    Firebase.database().ref('/columns').set(this.state.column);
+    console.log('DATA SAVED');
+  }
+  getUserData = () => {
+    let ref = Firebase.database().ref('/columns');
+    ref.on('value', snapshot => {
+      let retrived = snapshot.val();
+      if (retrived===null) retrived=[]; else
+      {for (let i =0; i<retrived.length; i++)
+      {if (retrived[i].tasks===undefined ) retrived[i].tasks=[];
+      }
+      }
+      
+      this.setState({column : retrived},//() => console.log(this.state)
+      );
+    });
+    console.log('DATA RETRIEVED');
+  }
   /*------------------------------------------------------------*/
   elementEdit(id, actionToDo, text, columnId) {
     let data = this.state.column;
+
+
     let columnNo = findIndex(data, columnId);
-        switch (actionToDo) {
+    switch (actionToDo) {
       case "ColAdd":
-        let maxColId = Math.max.apply(
+          let  maxColId
+        if (data.length===0) maxColId = 0; else
+        maxColId = Math.max.apply(
           null,
           data.map(column => {
             return parseInt(column.id.slice(3));
@@ -77,7 +112,7 @@ class App extends Component {
               actionItem: "col" + (maxColId + 1)
             }
           },
-         
+
         );
         break;
       case "ColEdit":
@@ -100,7 +135,7 @@ class App extends Component {
         //action = false;
         break;
       case "TaskEdit":
-        
+
         let taskNo = findIndex(data[columnNo].tasks, id);
         data[columnNo].tasks[taskNo].content = text;
         this.setState({ column: data });
@@ -109,17 +144,28 @@ class App extends Component {
         });
         break;
       case "TaskAdd":
+
+
         let maxTaskId = Math.max.apply(
           null,
           data.map(columns => {
+
+            let helpWithNoTasksCase
+            if (columns.tasks.length === 0)
+              helpWithNoTasksCase = [0];
+            else
+              helpWithNoTasksCase = columns.tasks.map(task => {
+                return parseInt(task.id.slice(4))
+              })
+
             return Math.max.apply(
               null,
-              columns.tasks.map(task => {
-                return parseInt(task.id.slice(4));
-              })
-            );
+              helpWithNoTasksCase
+            )
+              ;
           })
         );
+       
         data[columnNo].tasks.push({
           id: "task" + (maxTaskId + 1),
           content: ""
@@ -127,26 +173,22 @@ class App extends Component {
         this.setState(
           {
             column: data,
-            // editing: true,
-            //  editElement: "task" + (maxTaskId + 1),
+ 
             action: {
               actionName: "TaskEdit",
               actionItem: "task" + (maxTaskId + 1)
             }
           },
- 
+
         );
         break;
       default:
         this.setState({ action: { actionName: "", actionItem: "" } });
         break;
     }
-    /*  this.setState({
-      editing: action,
-      editElement: id,
-      action: { actionName: action, actionItem: id }
-    });*/
+
     this.setState({ column: data });
+    this.writeUserData()
   }
   /*------------------------------------------------------------*/
   onDragEnd = result => {
@@ -207,6 +249,7 @@ class App extends Component {
   };
   /*------------------------------------------------------------*/
   render() {
+   
     const someStyle = {
       minHeight: this.state.height,
       minWidth: this.state.colNumber * 358 + 300, // calculating screen width

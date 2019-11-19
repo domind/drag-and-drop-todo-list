@@ -6,7 +6,7 @@ import Container from "react-bootstrap/Container";
 import Col from "react-bootstrap/Col";
 import Column from "./column";
 import AddColumn from "./addColumn";
-import Firebase from 'firebase';
+import Firebase from "firebase";
 
 // a little function to help us with reordering the result
 const reorder = (list, startIndex, endIndex) => {
@@ -30,7 +30,7 @@ const getListStyle = {
   margin: 20,
   color: "black"
 };
-const config ={
+const config = {
   apiKey: "AIzaSyCmrU0AuRpNGPRsD2-JjQ5os7gPjKGxHMo",
   authDomain: "tribal-drake-257712.firebaseapp.com",
   databaseURL: "https://tribal-drake-257712.firebaseio.com",
@@ -38,8 +38,7 @@ const config ={
   storageBucket: "tribal-drake-257712.appspot.com",
   messagingSenderId: "577742396333",
   appId: "1:577742396333:web:8a52c828c3edb5de21df24"
-
-}
+};
 class App extends Component {
   constructor(props) {
     super(props);
@@ -69,51 +68,52 @@ class App extends Component {
   }
 
   writeUserData = () => {
-    Firebase.database().ref('/columns').set(this.state.column);
-    console.log('DATA SAVED');
-  }
+    Firebase.database()
+      .ref("/columns")
+      .set(this.state.column);
+    console.log("DATA SAVED");
+  };
   getUserData = () => {
-    let ref = Firebase.database().ref('/columns');
-    ref.on('value', snapshot => {
+    let ref = Firebase.database().ref("/columns");
+    ref.on("value", snapshot => {
       let retrived = snapshot.val();
-      if (retrived===null) retrived=[]; else
-      {for (let i =0; i<retrived.length; i++)
-      {if (retrived[i].tasks===undefined ) retrived[i].tasks=[];
+      if (retrived === null) retrived = [];
+      else {
+        for (let i = 0; i < retrived.length; i++) {
+          if (retrived[i].tasks === undefined) retrived[i].tasks = [];
+        }
       }
-      }
-      
-      this.setState({column : retrived},//() => console.log(this.state)
+
+      this.setState(
+        { column: retrived } //() => console.log(this.state)
       );
     });
-    console.log('DATA RETRIEVED');
-  }
+    console.log("DATA RETRIEVED");
+  };
   /*------------------------------------------------------------*/
   elementEdit(id, actionToDo, text, columnId) {
     let data = this.state.column;
 
-
     let columnNo = findIndex(data, columnId);
     switch (actionToDo) {
       case "ColAdd":
-          let  maxColId
-        if (data.length===0) maxColId = 0; else
-        maxColId = Math.max.apply(
-          null,
-          data.map(column => {
-            return parseInt(column.id.slice(3));
-          })
-        );
+        let maxColId;
+        if (data.length === 0) maxColId = 0;
+        else
+          maxColId = Math.max.apply(
+            null,
+            data.map(column => {
+              return parseInt(column.id.slice(3));
+            })
+          );
         data.push({ id: "col" + (maxColId + 1), title: "", tasks: [] });
 
-        this.setState(
-          {
-            action: {
-              actionName: "ColEdit",
-              actionItem: "col" + (maxColId + 1)
-            }
-          },
-
-        );
+        this.setState({
+          action: {
+            actionName: "ColEdit",
+            actionItem: "col" + (maxColId + 1)
+          }
+        });
         break;
       case "ColEdit":
         data[columnNo].title = text;
@@ -135,7 +135,6 @@ class App extends Component {
         //action = false;
         break;
       case "TaskEdit":
-
         let taskNo = findIndex(data[columnNo].tasks, id);
         data[columnNo].tasks[taskNo].content = text;
         this.setState({ column: data });
@@ -144,43 +143,32 @@ class App extends Component {
         });
         break;
       case "TaskAdd":
-
-
         let maxTaskId = Math.max.apply(
           null,
           data.map(columns => {
-
-            let helpWithNoTasksCase
-            if (columns.tasks.length === 0)
-              helpWithNoTasksCase = [0];
+            let helpWithNoTasksCase;
+            if (columns.tasks.length === 0) helpWithNoTasksCase = [0];
             else
               helpWithNoTasksCase = columns.tasks.map(task => {
-                return parseInt(task.id.slice(4))
-              })
+                return parseInt(task.id.slice(4));
+              });
 
-            return Math.max.apply(
-              null,
-              helpWithNoTasksCase
-            )
-              ;
+            return Math.max.apply(null, helpWithNoTasksCase);
           })
         );
-       
+
         data[columnNo].tasks.push({
           id: "task" + (maxTaskId + 1),
           content: ""
         });
-        this.setState(
-          {
-            column: data,
- 
-            action: {
-              actionName: "TaskEdit",
-              actionItem: "task" + (maxTaskId + 1)
-            }
-          },
+        this.setState({
+          column: data,
 
-        );
+          action: {
+            actionName: "TaskEdit",
+            actionItem: "task" + (maxTaskId + 1)
+          }
+        });
         break;
       default:
         this.setState({ action: { actionName: "", actionItem: "" } });
@@ -188,7 +176,7 @@ class App extends Component {
     }
 
     this.setState({ column: data });
-    this.writeUserData()
+    this.writeUserData();
   }
   /*------------------------------------------------------------*/
   onDragEnd = result => {
@@ -207,9 +195,12 @@ class App extends Component {
       );
 
       column = columnMoved;
-      this.setState({
-        column
-      });
+      this.setState(
+        {
+          column
+        },
+        () => this.writeUserData()
+      );
     } else {
       if (source.droppableId === destination.droppableId) {
         const column = this.state.column;
@@ -219,7 +210,7 @@ class App extends Component {
           result.destination.index
         );
         column[source.droppableId.slice(9)].tasks = tasks;
-        this.setState({ tasks });
+        this.setState({ tasks }, () => this.writeUserData());
       } else {
         let column = this.state.column;
 
@@ -235,9 +226,12 @@ class App extends Component {
         column[source.droppableId.slice(9)].tasks = sourceColumn;
         column[destination.droppableId.slice(9)].tasks = destColumn;
 
-        this.setState({
-          column
-        });
+        this.setState(
+          {
+            column
+          },
+          () => this.writeUserData()
+        );
 
         this.setState({
           colMinHeight: Math.max(
@@ -249,7 +243,6 @@ class App extends Component {
   };
   /*------------------------------------------------------------*/
   render() {
-   
     const someStyle = {
       minHeight: this.state.height,
       minWidth: this.state.colNumber * 358 + 300, // calculating screen width

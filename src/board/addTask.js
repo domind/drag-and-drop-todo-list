@@ -1,7 +1,7 @@
 import React from "react";
 import Button from "react-bootstrap/Button";
+import { grid } from "./styleConst";
 
-const grid = 8;
 const addTaskStyle = {
   padding: grid * 2,
   margin: `0 0 ${grid}px 0`,

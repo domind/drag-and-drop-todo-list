@@ -1,6 +1,7 @@
 import React, { Component } from "react";
 import { DragDropContext, Droppable } from "react-beautiful-dnd";
 //import { initData } from "./initData";
+// file with initial data for testing in case needed uncomment here and modify  getUserDat() as described there.
 import Row from "react-bootstrap/Row";
 import Container from "react-bootstrap/Container";
 import Col from "react-bootstrap/Col";
@@ -8,7 +9,7 @@ import Column from "./column";
 import AddColumn from "./addColumn";
 import Firebase from "firebase";
 
-// a little function to help us with reordering the result
+// a little function to help with reordering the result
 const reorder = (list, startIndex, endIndex) => {
   const result = Array.from(list);
   const [removed] = result.splice(startIndex, 1);
@@ -16,6 +17,7 @@ const reorder = (list, startIndex, endIndex) => {
   return result;
 };
 
+//function for find index of .item in list
 const findIndex = (list, item) => {
   return list
     .map(e => {
@@ -23,61 +25,50 @@ const findIndex = (list, item) => {
     })
     .indexOf(item);
 };
-
+// style for spacing columns
 const getListStyle = {
   display: "flex",
   padding: 5,
-  margin: 20,
-  color: "black"
+  margin: 20
 };
-const config = {
-  apiKey: "AIzaSyCmrU0AuRpNGPRsD2-JjQ5os7gPjKGxHMo",
-  authDomain: "tribal-drake-257712.firebaseapp.com",
-  databaseURL: "https://tribal-drake-257712.firebaseio.com",
-  projectId: "tribal-drake-257712",
-  storageBucket: "tribal-drake-257712.appspot.com",
-  messagingSenderId: "577742396333",
-  appId: "1:577742396333:web:8a52c828c3edb5de21df24"
-};
-class App extends Component {
+
+class Board extends Component {
   constructor(props) {
     super(props);
-    Firebase.initializeApp(config);
     this.state = {
+      haveData: false,
       column: [],
-      width: window.innerWidth,
-      height: window.innerHeight,
       colMinHeight: 6,
-      colNumber: 4,
+  //    colNumber: 4,
       action: { actionName: "", actionItem: "" }
     };
-    this.updateWindowDimensions = this.updateWindowDimensions.bind(this);
     this.elementEdit = this.elementEdit.bind(this);
   }
-  componentDidMount() {
-    this.updateWindowDimensions();
-    window.addEventListener("resize", this.updateWindowDimensions);
-    this.getUserData();
+
+  componentDidUpdate(prevProps) {
+    if (this.props.uid !== prevProps.uid) {
+      if (this.props.uid !== null) this.getUserData();
+    }
   }
 
-  componentWillUnmount() {
-    window.removeEventListener("resize", this.updateWindowDimensions);
-  }
-  updateWindowDimensions() {
-    this.setState({ width: window.innerWidth, height: window.innerHeight });
+  componentDidMount() {
+    this.getUserData();
   }
 
   writeUserData = () => {
     Firebase.database()
-      .ref("/columns")
+      .ref(this.props.uid + "/columns")
       .set(this.state.column);
     console.log("DATA SAVED");
   };
+
   getUserData = () => {
-    let ref = Firebase.database().ref("/columns");
+    let ref = Firebase.database().ref(this.props.uid + "/columns");
     ref.on("value", snapshot => {
       let retrived = snapshot.val();
-      if (retrived === null) retrived = [];
+      if (retrived === null)
+       retrived = []; 
+       // retrived=initData; // uncoment this line to populate with data from initData.js
       else {
         for (let i = 0; i < retrived.length; i++) {
           if (retrived[i].tasks === undefined) retrived[i].tasks = [];
@@ -85,15 +76,15 @@ class App extends Component {
       }
 
       this.setState(
-        { column: retrived } //() => console.log(this.state)
+        { column: retrived, haveData: true } //,() => console.log(this.state)
       );
     });
+
     console.log("DATA RETRIEVED");
   };
   /*------------------------------------------------------------*/
   elementEdit(id, actionToDo, text, columnId) {
     let data = this.state.column;
-
     let columnNo = findIndex(data, columnId);
     switch (actionToDo) {
       case "ColAdd":
@@ -132,7 +123,6 @@ class App extends Component {
         const myColumn = columns[findIndex(columns, columnId)];
 
         myColumn.tasks.splice(findIndex(myColumn.tasks, id), 1);
-        //action = false;
         break;
       case "TaskEdit":
         let taskNo = findIndex(data[columnNo].tasks, id);
@@ -216,7 +206,7 @@ class App extends Component {
 
         const sourceColumn = Array.from(
           column[source.droppableId.slice(9)].tasks
-        ); //source.droppableId.slice(9)
+        ); 
         const destColumn = Array.from(
           column[destination.droppableId.slice(9)].tasks
         );
@@ -243,16 +233,10 @@ class App extends Component {
   };
   /*------------------------------------------------------------*/
   render() {
-    const someStyle = {
-      minHeight: this.state.height,
-      minWidth: this.state.colNumber * 358 + 300, // calculating screen width
-      background: "SteelBlue",
-      color: "white"
-    };
-
     return (
       <div
-        style={someStyle}
+        className="myStyle"
+
         onClick={() =>
           this.setState({
             editCol: false,
@@ -267,39 +251,42 @@ class App extends Component {
               <h1>Testing react-beautiful-dnd</h1>
             </Col>
           </Row>
-
-          <Row>
-            <DragDropContext onDragEnd={this.onDragEnd}>
-              <Droppable
-                direction="horizontal"
-                droppableId="board"
-                type="COLUMN"
-              >
-                {(provided, snapshot) => (
-                  <div>
-                    <div ref={provided.innerRef} style={getListStyle}>
-                      {this.state.column.map((column, index) => (
-                        <Column
-                          key={index}
-                          column={column}
-                          index={index}
-                          colMinHeight={this.state.colMinHeight}
-                          elementEdit={this.elementEdit}
-                          action={this.state.action}
-                        />
-                      ))}
-                      {provided.placeholder}
-                      <AddColumn elementEdit={this.elementEdit} />
+          {this.state.haveData ? (
+            <Row>
+              <DragDropContext onDragEnd={this.onDragEnd}>
+                <Droppable
+                  direction="horizontal"
+                  droppableId="board"
+                  type="COLUMN"
+                >
+                  {(provided, snapshot) => (
+                    <div>
+                      <div ref={provided.innerRef} style={getListStyle}>
+                        {this.state.column.map((column, index) => (
+                          <Column
+                            key={index}
+                            column={column}
+                            index={index}
+                            colMinHeight={this.state.colMinHeight}
+                            elementEdit={this.elementEdit}
+                            action={this.state.action}
+                          />
+                        ))}
+                        {provided.placeholder}
+                        <AddColumn elementEdit={this.elementEdit} />
+                      </div>
                     </div>
-                  </div>
-                )}
-              </Droppable>
-            </DragDropContext>
-          </Row>
+                  )}
+                </Droppable>
+              </DragDropContext>
+            </Row>
+          ) : (
+            <Row>Loading data</Row>
+          )}
         </Container>
       </div>
     );
   }
 }
 
-export default App;
+export default Board;

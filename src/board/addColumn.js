@@ -1,7 +1,7 @@
 import React from "react";
 import Button from "react-bootstrap/Button";
 import {grid,colWidth} from "./styleConst"
-//const grid = 8;
+
 const addColStyle = {
   padding: grid * 2,
   margin: 10,

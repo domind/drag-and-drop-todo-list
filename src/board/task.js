@@ -1,12 +1,11 @@
 import React from "react";
 import { Draggable } from "react-beautiful-dnd";
-import "./bootstrap.css";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faEdit,faTrashAlt } from "@fortawesome/free-solid-svg-icons";
 import Col from "react-bootstrap/Col";
 import Row from "react-bootstrap/Row";
+import { grid} from "./styleConst";
 
-const grid = 8;
 
 const getItemStyle = (isDragging, draggableStyle) => ({
   // some basic styles to make the items look a bit nicer

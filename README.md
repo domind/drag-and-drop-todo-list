@@ -2,6 +2,8 @@
 
 Drag and drop todo list in React using react-beautiful-dnd
 
+[Demo](https://domind.github.io/todo/home)
+
 This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
 
 ## Available Scripts
